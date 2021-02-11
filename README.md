@@ -69,10 +69,6 @@ jobs:
 
 notifications:
   email: false
-
-after_success:
-  - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
-  - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
 ```
 Note that under `after_success`, there are two lines that deal with `Codecov` and `Coveralls`. These are used to update code coverage which is discussed in section 3.
 
@@ -92,7 +88,7 @@ using
 ```
 
 ### 2.2 AppVeyor
-AppVeyor is another CI platform that is backed by the Windows Azure platform. I use Travis to test my package on MacOS and Linux while I use AppVeyor to test my package on Windows platforms.
+[AppVeyor](https://www.appveyor.com/) is another CI platform that is backed by the Windows Azure platform. I use Travis CI to test my package on MacOS and Linux platforms while I use AppVeyor to test my package's compatibility with Windows platforms. To use AppVeyor, create an account @ https://www.appveyor.com/ and link your repository to it. Then add a `.appveyor.yml` file in the root directory of your package. The following template should be good enough for most cases.
 ```{julia}
 # Documentation: https://github.com/JuliaCI/Appveyor.jl
 environment:
@@ -124,9 +120,6 @@ build_script:
 test_script:
   - echo "%JL_TEST_SCRIPT%"
   - C:\julia\bin\julia -e "%JL_TEST_SCRIPT%"
-on_success:
-  - echo "%JL_CODECOV_SCRIPT%"
-  - C:\julia\bin\julia -e "%JL_CODECOV_SCRIPT%"
 ```
 
 ## 3. Code Coverage
@@ -134,11 +127,26 @@ Code coverage is how many lines/arcs/blocks of your code is executed while perfo
 
 ### 1. Codecov
 [Codecov](https://about.codecov.io/) is a popular code coverage platform used in numerous Julia packagees. Using it is extremely simple: 
-1. creating an account @ `codecov.io` and linking your GitHub/GitLab/Bitbucket repository.
-2. Add the following line of code to the endof your your `.travis.yml` file. 
-```{julia}
+1. create an account @ `codecov.io` and link your GitHub/GitLab/Bitbucket repository.
+2. Add the following line of code to the end of your `.travis.yml` file. 
+```{yaml}
 after_success:
   - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
+```
+OR you can add this to the end of your `.appveyor.yml` file.
+```{yaml}
+on_success:
+  - echo "%JL_CODECOV_SCRIPT%"
+  - C:\julia\bin\julia -e "%JL_CODECOV_SCRIPT%"
+```
+
+### 2. Coverall
+[Coveralls](https://coveralls.io/) is another code coverage platform that you can use. The way that code coverage is displayed is slightly different so it is up to the developer to choose whether to use `Codecov` or `Coveralls`. Using `Coveralls` is also very simple:
+1. Create an account @ `coveralls.io` and link your GitHub/GitLab/Bitbucket repository
+2. Add the following line of code to the end of your `.travis.yml` file.
+```{yaml}
+after_success
+  - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
 ```
 
 ## 4. Managing Julia Code on GitLab and GitHub
