@@ -1,9 +1,9 @@
 # A Basic Guide for Package Development in Julia
 **Author:** Shozen Dan, Stat&CS Undergrad @ Keio University (JPN) & UC Davis (USA)
 
-**Last Update**: 2019/02/11
+**Last Update**: 2019/02/12
 
-## Introduuction
+## Introduction
 This tutorial assumes that the reader has some knowledge of using Julia to write programs. This tutorial aims to provide an one-stop tutorial for basic package development. 
 
 ## 1. Initiating a Project
@@ -162,6 +162,20 @@ git remote add github https://yourLogin@github.com/yourLogin/yourRepoName.git
 ```
 git push --mirror github
 ```
+
+## 5. Registering your Package
+Currently, there are 2 ways of registering your package.
+1. Via the [Web Interface](https://juliahub.com). 
+2. Via the GitHub App. 
+
+Documentation for both methods can be found @ the [Julia Registrator](https://github.com/JuliaRegistries/Registrator.jl). The following tutorial is copied from the Julia Registrator GitHub page for registering the package via GitHub.
+
+1. Install the Julia Registrator: [![install](https://img.shields.io/badge/-install%20app-blue.svg)](https://github.com/apps/juliateam-registrator/installations/new)
+2. Set the (Julia)Project.toml version field in your repository to your new desired version.
+Comment `@JuliaRegistrator register` on the commit/branch you want to register (e.g. like [here](https://github.com/JuliaRegistries/Registrator.jl/issues/61#issuecomment-483486641) or [here](https://github.com/chakravala/Grassmann.jl/commit/3c3a92610ebc8885619f561fe988b0d985852fce#commitcomment-33233149)).
+3. If something is incorrect, adjust, and redo step 
+4. If the automatic tests pass, but a moderator makes suggestions (e.g., manually updating your (Julia)Project.toml to include a [compat] section with version requirements for dependancies), then incorporate suggestions as you see fit into a new commit, and redo step 2 for the new commit. You don't need to do anything to close out the old request.
+5. Finally, either rely on the TagBot GitHub Action to tag and make a github release or alternatively tag the release manually.
 
 ### Extra. Creating Code Documentation for Julia Packages
 1. Install `Documentor.jl`
