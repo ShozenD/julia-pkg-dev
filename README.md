@@ -43,113 +43,94 @@ If you already have a directory with Julia code that you have developed, you can
 ```
 
 ## 2. Continuous Integration (CI)
-While it is not a requirement, many Julia packages implements continuous integration. In my opinion, for small and simple packaages, the work required to implement continuous integration outweights its benefits. However, when packages become large and entangled, CI can provide a consitent and automated way to build, package, and test your package's functionalities. Implementing CI can also reassure potential users that your package is reliable and devoid of major bugs. 
+While it is not a requirement, many Julia packages implements continuous integration. In my opinion, for small and simple packaages, the work required to implement continuous integration outweights its benefits. However, when packages become large and entangled, CI can provide a consitent and automated way to build, package, and test your package's functionalities. Implementing CI can also reassure potential users that your package is reliable and devoid of major bugs.
 
-### 2.1 Travis CI
-A CI platform that is common among Julia developers is [Travis CI](https://travis-ci.org/). You will need to link your GitLab or GitHub accouunt to Travis in order to use it's services. For official documentation on how to use Travis CI refer to the following documents: [GitHub Docs](https://docs.travis-ci.com/user/tutorial/#to-get-started-with-travis-ci-using-github), [GitLab Docs](https://docs.travis-ci.com/user/tutorial/#to-get-started-with-travis-ci-using-gitlab). However, the following implementation tutorial should be sufficient for most applications.
+There are many CI services available. You may have heard of [Travis CI](https://travis-ci.org/) and [AppVeyor](https://www.appveyor.com/) as they are well used among Julia developers. However most CI services have a limited number of free credits that you can use thus they are not sustainable if you are an independent developer looking to test your open-source package. 
+
+### GitHub Actions
+If you are keeping your code on GitHub, I think the simplest option is to use [GitHub Actions](https://github.com/features/actions). Its fast and you get 2,000 credits/month (equivalent to about 65 min per day) for free, so as long as you don't run a test for every small change, its more than enough to work with. If you want detailed information on how GitHub Actions work, please visit the website. Otherwise the following steps should suffice.
 
 #### Step 1
-**After you have linked your GitHub or GitLab account to Travis** (Please check the official documentation as well), you will need to add a ``.travis.yml`` file in the root directory of your package (e.g. PackageName/.travis.yml). The following template should be good enough for most packages.
+In you GitHub repository create a directory named `.github/workflows`. Within that directory, include the following `CI.yml`. 
 ```{yaml}
-language: julia
-
-os:
-  - osx
-  - linux
-
-julia:
-  - 1.0
-  - 1.4
-  - 1.5
-  - nightly
-
+# Generated using the wonderful PkgTemplates.jl
+name: CI
+on:
+  - push
+  - pull_request
 jobs:
-  allow_failures:
-    - julia: nightly
-
-notifications:
-  email: false
+  test:
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - '1.0'
+          - '1.5'
+          - 'nightly'
+        os:
+          - ubuntu-latest
+          - macOS-latest
+        arch:
+          - x64
+    steps:
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      - uses: actions/cache@v1
+        env:
+          cache-name: cache-artifacts
+        with:
+          path: ~/.julia/artifacts
+          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-test-${{ env.cache-name }}-
+            ${{ runner.os }}-test-
+            ${{ runner.os }}-
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
+      - uses: julia-actions/julia-processcoverage@v1
+      - uses: codecov/codecov-action@v1 
+        with:
+          file: lcov.info
 ```
-Note that under `after_success`, there are two lines that deal with `Codecov` and `Coveralls`. These are used to update code coverage which is discussed in section 3.
+### Step 2
+Next, you will need to create a `test` directory under your root directory and add the file `runtest.jl`. You will also need to use the REPL to add your test dependencies.
+```{julia}
+<pkg> activate ./test
+<pkg> add Test
+<pkg> add LinearAlgebra # e.g. I'm using LinearAlgebra to test my package
+```
+This will create a separate `Project.toml` and `Manifest.toml` inside the `test` directory that you have created. Make sure you add every package that you are importing within the following `runtest.jl` file, otherwise the CI pipeline will fail. 
 
-#### Step 2
-Next, you will need to create a `test` directory under your root directory and add the file `runtest.jl`. Also make sure to install the `Test.jl` package and add it to the list of dependencits in `Project.toml` and `Manifest.toml` (This should be automatically done when you use the `add` command). 
-
-Within ``Test.jl`` you can define tests for your functions. When Travis performs continuous integration, it will run these tests and report whether they were sucessful. This will also effect Code Coverage, which is discussed in the next section. 
 ```{julia}
 using
     Test,
-    PackageName,
+    <PackageName>,
     LinearAlgebra
 
 @test somefunction(1,1)
 @test somefunction2(2,3)
-@test somefunction3(5,8)
-```
 
-### 2.2 AppVeyor
-[AppVeyor](https://www.appveyor.com/) is another CI platform that is backed by the Windows Azure platform. I use Travis CI to test my package on MacOS and Linux platforms while I use AppVeyor to test my package's compatibility with Windows platforms. To use AppVeyor, create an account @ https://www.appveyor.com/ and link your repository to it. Then add a `.appveyor.yml` file in the root directory of your package. The following template should be good enough for most cases.
-```{julia}
-# Documentation: https://github.com/JuliaCI/Appveyor.jl
-environment:
-  matrix:
-  - julia_version: 1.3
-  - julia_version: 1.4
-  - julia_version: 1.5
-  - julia_version: nightly
-platform:
-  - x86
-  - x64
-matrix:
-  allow_failures:
-    - julia_version: nightly
-branches:
-  only:
-    - master
-    - /release-.*/
-notifications:
-  - provider: Email
-    on_build_success: false
-    on_build_failure: false
-    on_build_status_changed: false
-install:
-  - ps: iex ((new-object net.webclient).DownloadString("https://raw.githubusercontent.com/JuliaCI/Appveyor.jl/version-1/bin/install.ps1"))
-build_script:
-  - echo "%JL_BUILD_SCRIPT%"
-  - C:\julia\bin\julia -e "%JL_BUILD_SCRIPT%"
-test_script:
-  - echo "%JL_TEST_SCRIPT%"
-  - C:\julia\bin\julia -e "%JL_TEST_SCRIPT%"
+@testset "Test norm" begin
+  @test norm(somefunction(5,8) - somefunction(8,5)) == 0 # I am using the norm function from the LinearAlgebra package.
+end
 ```
+In my opinion, its always a good idea to run `runtest.jl` locally, before pushing it to your repository because it often saves time and GitHub Action credits. 
 
-## 3. Code Coverage
-Code coverage is how many lines/arcs/blocks of your code is executed while performing the automated test that you have setup in your CI/CD process. While it is not a requirement, good code coverage statistics can give users insights about how well your package is tested (i.e. how reliable it is). In this section I will introduce two code coverage platforms: `Codecov` and `Coverall`.
+### Step 3
+The final step is to add code coverage (if you want). Code coverage is how many lines/arcs/blocks of your code is executed while performing the automated test that you have setup in your CI/CD process. While it is not a requirement, good code coverage statistics can give users insights about how well your package is tested (i.e. how reliable it is). There are numerous code coverage services you can choose from but the `CI.yml` file above assumes you are using [CodeCov](https://about.codecov.io/). Simply go to their website and follow the steps to link your package to CodeCov. 
 
-### 1. Codecov
-[Codecov](https://about.codecov.io/) is a popular code coverage platform used in numerous Julia packagees. Using it is extremely simple: 
-1. create an account @ `codecov.io` and link your GitHub/GitLab/Bitbucket repository.
-2. Add the following line of code to the end of your `.travis.yml` file. 
-```{yaml}
-after_success:
-  - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
-```
-OR you can add this to the end of your `.appveyor.yml` file.
-```{yaml}
-on_success:
-  - echo "%JL_CODECOV_SCRIPT%"
-  - C:\julia\bin\julia -e "%JL_CODECOV_SCRIPT%"
-```
+Now, when you push your code to GitHub, it will automatically start testing you package. Don't forget to add the workflow status badge and the code coverage badge so that people can see that your package passes all the tests and how much code is covered in the process.
 
-### 2. Coverall
-[Coveralls](https://coveralls.io/) is another code coverage platform that you can use. The way that code coverage is displayed is slightly different so it is up to the developer to choose whether to use `Codecov` or `Coveralls`. Using `Coveralls` is also very simple:
-1. Create an account @ `coveralls.io` and link your GitHub/GitLab/Bitbucket repository
-2. Add the following line of code to the end of your `.travis.yml` file.
-```{yaml}
-after_success
-  - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
-```
+GitHub workflow status badge: https://docs.github.com/en/actions/managing-workflow-runs/adding-a-workflow-status-badge
 
-## 4. Managing Julia Code on GitLab and GitHub
+CodeCov badge: `https://codecov.io/gh/<your-organisation>/<your-project>/settings/badge`
+
+## 3. Managing Julia Code on GitLab and GitHub
 ### Transfering Code from GitLab to GitHub
 1. Create an [new repository](https://docs.github.com/en/github/getting-started-with-github/create-a-repo) on GitHub.
 
@@ -163,7 +144,7 @@ git remote add github https://yourLogin@github.com/yourLogin/yourRepoName.git
 git push --mirror github
 ```
 
-## 5. Registering your Package
+## 4. Registering your Package
 Currently, there are 2 ways of registering your package.
 1. Via the [Web Interface](https://juliahub.com). 
 2. Via the GitHub App. 
