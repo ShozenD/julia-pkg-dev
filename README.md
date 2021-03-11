@@ -126,7 +126,7 @@ The final step is to add code coverage (if you want). Code coverage is how many 
 
 Now, when you push your code to GitHub, it will automatically start testing you package. Don't forget to add the workflow status badge and the code coverage badge so that people can see that your package passes all the tests and how much code is covered in the process.
 
-GitHub workflow status badge: https://docs.github.com/en/actions/managing-workflow-runs/adding-a-workflow-status-badge
+GitHub workflow status badge: `https://docs.github.com/en/actions/managing-workflow-runs/adding-a-workflow-status-badge`
 
 CodeCov badge: `https://codecov.io/gh/<your-organisation>/<your-project>/settings/badge`
 
