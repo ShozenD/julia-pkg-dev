@@ -1,7 +1,7 @@
 # A Basic Guide for Package Development in Julia
 **Author:** Shozen Dan, Stat&CS Undergrad @ Keio University (JPN) & UC Davis (USA)
 
-**Last Update**: 2019/02/12
+**Last Update**: 2019/03/21
 
 ## Introduction
 This tutorial assumes that the reader has some knowledge of using Julia to write programs. This tutorial aims to provide an one-stop tutorial for basic package development. 
@@ -42,22 +42,87 @@ If you already have a directory with Julia code that you have developed, you can
 (PackageName) pkg> add LinearAlgebra
 ```
 
-## 2. Continuous Integration (CI)
-While it is not a requirement, many Julia packages implements continuous integration. In my opinion, for small and simple packaages, the work required to implement continuous integration outweights its benefits. However, when packages become large and entangled, CI can provide a consitent and automated way to build, package, and test your package's functionalities. Implementing CI can also reassure potential users that your package is reliable and devoid of major bugs.
+## 2. Continuous Integration and Develpment (CI/CD)
+While it is not a requirement, many Julia packages implements CI. For small packaages, the work required to implement CI outweights its benefits. But, when packages become large and entangled, CI provide an automated way to build and test your package's functionalities. CI can also reassure potential users that your package is reliable and devoid of major bugs.
 
-There are many CI services available. You may have heard of [Travis CI](https://travis-ci.org/) and [AppVeyor](https://www.appveyor.com/) as they are well used among Julia developers. However most CI services have a limited number of free credits that you can use thus they are not sustainable if you are an independent developer looking to test your open-source package. 
+The following table shows the pricing plans for 3 commonly used CI/CD services. For independent researchers or developers, GitHub workflows is a good choice because its free tier offers the most run time. But for large scale projects run by a team, it may be worth while to investigate the benefits paid tiers and other services such as GitLab and Travis CI has to offer.
+<table>
+  <tr>
+    <th></th>
+    <th>GitHub Actions</th>
+    <th>GitLab CI/CD</th>
+    <th>Travis CI</th>
+  </tr>  
+  <tr>
+    <td><b>Free Tier</td>
+    <td><li>2000 min/month</td>
+    <td><li>400 min/month</td>
+    <td><li>10000 credits max</td>
+  </tr>  
+  <tr>
+    <td><b>Cheapest</td>
+    <td>
+      <li> $4 per user/month
+      <li> 3000 min/month
+    </td>
+    <td>
+      <li> $19 per user/month
+      <li> 10000 min/month
+    </td>
+    <td>
+      <li> $69/month
+      <li> Adjustable Credits
+    </td>
+  </tr>  
+  <tr>
+  </tr>  
+</table>
 
 ### GitHub Actions
-If you are keeping your code on GitHub, I think the simplest option is to use [GitHub Actions](https://github.com/features/actions). Its fast and you get 2,000 credits/month (equivalent to about 65 min per day) for free, so as long as you don't run a test for every small change, its more than enough to work with. If you want detailed information on how GitHub Actions work, please visit the website. Otherwise the following steps should suffice.
+If your code is on GitHub, the simplest option is to use [GitHub Actions](https://github.com/features/actions). If you want detailed information on how GitHub Actions work, please visit the website. Otherwise the following steps should suffice.
 
 #### Step 1
-In you GitHub repository create a directory named `.github/workflows`. Within that directory, include the following `CI.yml`. 
+Create a `test` directory under your root directory and add the file `runtest.jl`. Navigate into the `test` directory and add your test dependencies with REPL as such:
+```{julia}
+<pkg> activate ./test
+<pkg> add Test
+<pkg> add LinearAlgebra # e.g. I'm using LinearAlgebra to test my package
+```
+This will create a separate `Project.toml` and `Manifest.toml` inside the `test` directory. Make sure to add every package that you are importing in `runtest.jl` file using REPL, otherwise CI will fail. 
+
+```{julia}
+using
+    Test,
+    <PackageName>,
+    LinearAlgebra
+
+@test somefunction(1,1)
+@test somefunction2(2,3)
+
+@testset "Test norm" begin
+  @test norm(somefunction(5,8) - somefunction(8,5)) == 0 # I am using the norm function from the LinearAlgebra package.
+end
+```
+After you are done writing tests, its good practice to run `runtest.jl` locally before pushing it to your repository as it will help you find bugs prior CI, saveing you time and credits. 
+
+#### Step 2
+In you root directory create a directory named `.github/workflows`. Within that directory, include the following `CI.yml`. 
 ```{yaml}
-# Generated using the wonderful PkgTemplates.jl
+# Generated using the wonderful PkgTemplates.jl and altered slightly 
 name: CI
 on:
-  - push
-  - pull_request
+  push:
+    paths: # Specifying which files to run CI/CD for
+    - src/* 
+    - test/runtests.jl
+    - Manifest.toml
+    - Project.toml
+  pull_request:
+    paths:
+    - src/* 
+    - test/runtests.jl
+    - Manifest.toml
+    - Project.toml
 jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
@@ -97,31 +162,13 @@ jobs:
         with:
           file: lcov.info
 ```
-### Step 2
-Next, you will need to create a `test` directory under your root directory and add the file `runtest.jl`. You will also need to use the REPL to add your test dependencies.
-```{julia}
-<pkg> activate ./test
-<pkg> add Test
-<pkg> add LinearAlgebra # e.g. I'm using LinearAlgebra to test my package
-```
-This will create a separate `Project.toml` and `Manifest.toml` inside the `test` directory that you have created. Make sure you add every package that you are importing within the following `runtest.jl` file, otherwise the CI pipeline will fail. 
+`push` and `pull_request` events means that your CI/CD pipeline will only run on a push or pull request. Although its not covered here, you can specify branches and tags as well.
 
-```{julia}
-using
-    Test,
-    <PackageName>,
-    LinearAlgebra
+Generally, you don't want to run CI/CD for every single change you make (e.g. changes to README.md file). Under `paths` you can specify which files you want to run CI/CD for. You can also use `paths-ignore` which will only run CI/CD if the altered code belongs to a file not specified under it. 
 
-@test somefunction(1,1)
-@test somefunction2(2,3)
+You can specify which version of Julia you want to test and what machine you want to use under `matrix`. Here we test Julia 1.0, 1.5, and nightly(latest unstable ver.) on macOS and ubuntu machines. When you are testing your CI/CD pipeline, it may be prudent to comment some of these out to save time.
 
-@testset "Test norm" begin
-  @test norm(somefunction(5,8) - somefunction(8,5)) == 0 # I am using the norm function from the LinearAlgebra package.
-end
-```
-In my opinion, its always a good idea to run `runtest.jl` locally, before pushing it to your repository because it often saves time and GitHub Action credits. 
-
-### Step 3
+#### Step 3
 The final step is to add code coverage (if you want). Code coverage is how many lines/arcs/blocks of your code is executed while performing the automated test that you have setup in your CI/CD process. While it is not a requirement, good code coverage statistics can give users insights about how well your package is tested (i.e. how reliable it is). There are numerous code coverage services you can choose from but the `CI.yml` file above assumes you are using [CodeCov](https://about.codecov.io/). Simply go to their website and follow the steps to link your package to CodeCov. 
 
 Now, when you push your code to GitHub, it will automatically start testing you package. Don't forget to add the workflow status badge and the code coverage badge so that people can see that your package passes all the tests and how much code is covered in the process.
@@ -129,6 +176,56 @@ Now, when you push your code to GitHub, it will automatically start testing you 
 GitHub workflow status badge: `https://docs.github.com/en/actions/managing-workflow-runs/adding-a-workflow-status-badge`
 
 CodeCov badge: `https://codecov.io/gh/<your-organisation>/<your-project>/settings/badge`
+
+### GitLab CI/CD
+If you are managing you code on GitLab, you can use GitLab CI/CD. After finishing **Step 1** from above, create a `.gitlab-ci.yml` file under you root directory and add the following:
+```{yaml}
+.check: # Specifying files to run CI/CD
+  script: echo "Running CI/CD only if specific files are changed"
+  rules:
+  - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH
+    changes:
+    - src/*
+    - test/runtest.jl
+    - Project.toml
+    - Manifest.toml 
+    when: manual
+
+# Generated using PkgTemplate and altered to check specific files for changes
+.script:
+  script:
+    - |
+      julia --project=@. -e '
+        using Pkg
+        Pkg.build()
+        Pkg.test(coverage=true)'
+.coverage:
+  coverage: /Test coverage (\d+\.\d+%)/
+  after_script:
+    - |
+      julia -e '
+        using Pkg
+        Pkg.add("Coverage")
+        using Coverage
+        c, t = get_summary(process_folder())
+        using Printf
+        @printf "Test coverage %.2f%%\n" 100c / t'
+
+Julia 1.0:
+  image: julia:1.0
+  extends:
+    - .check
+    - .script
+    - .coverage
+
+Julia 1.5:
+  image: julia:1.5
+  extends:
+    - .check
+    - .script
+    - .coverage
+``` 
+As in the case of GitHub Actions, the code under `.check` will ensure that the CI/CD is not run for anything but a push or pull request to one of the specified files. 
 
 ## 3. Managing Julia Code on GitLab and GitHub
 ### Transfering Code from GitLab to GitHub

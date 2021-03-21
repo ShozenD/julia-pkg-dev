@@ -7,6 +7,7 @@ t = Template(;
         Codecov(),
         AppVeyor(),
         GitHubActions(; linux=true, osx=true),
+        GitLabCI(; coverage=true),
         Documenter{GitHubActions}()
     ]
 )
