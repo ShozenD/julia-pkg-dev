@@ -73,9 +73,7 @@ The following table shows the pricing plans for 3 commonly used CI/CD services. 
       <li> $69/month
       <li> Adjustable Credits
     </td>
-  </tr>  
-  <tr>
-  </tr>  
+  </tr> 
 </table>
 
 ### GitHub Actions
