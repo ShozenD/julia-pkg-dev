@@ -54,24 +54,24 @@ The following table shows the pricing plans for 3 commonly used CI/CD services. 
     <th>Travis CI</th>
   </tr>  
   <tr>
-    <td><b>Free Tier</td>
-    <td><li>2000 min/month</td>
-    <td><li>400 min/month</td>
-    <td><li>10000 credits max</td>
+    <td><b>Free Tier</b></td>
+    <td><li>2000 min/month</li></td>
+    <td><li>400 min/month</li></td>
+    <td><li>10000 credits max</li></td>
   </tr>  
   <tr>
-    <td><b>Cheapest</td>
+    <td><b>Cheapest</b></td>
     <td>
-      <li> $4 per user/month
-      <li> 3000 min/month
+      <li> $4 per user/month </li>
+      <li> 3000 min/month </li>
     </td>
     <td>
-      <li> $19 per user/month
-      <li> 10000 min/month
+      <li> $19 per user/month </li>
+      <li> 10000 min/month </li>
     </td>
     <td>
-      <li> $69/month
-      <li> Adjustable Credits
+      <li> $69/month </li>
+      <li> Adjustable Credits </li>
     </td>
   </tr> 
 </table>
