@@ -7,7 +7,6 @@
 This tutorial assumes that the reader has some knowledge of using Julia to write programs. This tutorial aims to provide an one-stop tutorial for basic package development. 
 
 ## 1. Initiating a Project
-
 ### 1.1 Starting from scratch
 If you're developing a package from scratch, the easiest way to initiate a project in Julia is enter the Pkg REPL mode by pressing ``]`` and using the following command.
 ```{julia}
@@ -35,7 +34,7 @@ To update a dependency, use ``update``:
 ```{julia}
 (PackageName) pkg> update LinearAlgebra
 ```
-### 1.2 If you already have some code
+### 1.3 If you already have some code
 If you already have a directory with Julia code that you have developed, you can ``activate`` the environment and use the ``add`` command to add a new or existent dependency. If ``Project.toml`` and/or ``Manifest.toml`` is not present within your project directory, Julia will automatically create the pair for you.
 ```{julia}
 (v1.5) pkg> activate PackageName
@@ -105,19 +104,19 @@ After you are done writing tests, its good practice to run `runtest.jl` locally 
 
 #### Step 2
 In you root directory create a directory named `.github/workflows`. Within that directory, include the following `CI.yml`. 
-```{yaml}
+```
 # Generated using the wonderful PkgTemplates.jl and altered slightly 
 name: CI
 on:
   push:
     paths: # Specifying which files to run CI/CD for
-    - src/* 
+    - src/**
     - test/runtests.jl
     - Manifest.toml
     - Project.toml
   pull_request:
     paths:
-    - src/* 
+    - src/**
     - test/runtests.jl
     - Manifest.toml
     - Project.toml
@@ -183,7 +182,7 @@ If you are managing you code on GitLab, you can use GitLab CI/CD. After finishin
   rules:
   - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH
     changes:
-    - src/*
+    - src/**
     - test/runtest.jl
     - Project.toml
     - Manifest.toml 
