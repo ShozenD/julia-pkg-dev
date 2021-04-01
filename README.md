@@ -122,7 +122,7 @@ on:
     - Project.toml
 jobs:
   test:
-    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
+    name: Julia $\{\{ matrix.version \}\} - $\{\{ matrix.os \}\} - $\{\{ matrix.arch \}\} - $\{\{ github.event_name \}\}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
