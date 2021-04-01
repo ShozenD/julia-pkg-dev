@@ -9,35 +9,35 @@ This tutorial assumes that the reader has some knowledge of using Julia to write
 ## 1. Initiating a Project
 ### 1.1 Starting from scratch
 If you're developing a package from scratch, the easiest way to initiate a project in Julia is enter the Pkg REPL mode by pressing ``]`` and using the following command.
-```{julia}
-(v1.5) pkg> generate PackageName
+```
+(@v1.x) pkg> generate PackageName
 ```
 This will create a directory called ``PackageName`` which contains the ``src`` subdirectory and ``Project.toml`` file. The ``src`` will house the source code while ``Project.toml`` is used to manage the dependencies. 
 
 Before addning new dependencies to your package, first activate the environment of package by entering the Pkg REPL mode again and entering the following:
-```{julia}
-(v1.5) pkg> activate PackageName
+```
+(v1.x) pkg> activate PackageName
 ```
 
 To add a dependency, use ``add``:
-```{julia}
+```
 (PackageName) pkg> add LinearAlgebra
 ```
 If it is not already present, this command will have Julia create a ``Manifest.toml`` file that contains all dependency information such as package names, UUID, and interdependencies.
 
 To remove a dependency, use ``rm``:
-```{julia}
+```
 (PackageName) pkg> rm LinearAlgebra
 ```
 
 To update a dependency, use ``update``:
-```{julia}
+```
 (PackageName) pkg> update LinearAlgebra
 ```
 ### 1.3 If you already have some code
 If you already have a directory with Julia code that you have developed, you can ``activate`` the environment and use the ``add`` command to add a new or existent dependency. If ``Project.toml`` and/or ``Manifest.toml`` is not present within your project directory, Julia will automatically create the pair for you.
-```{julia}
-(v1.5) pkg> activate PackageName
+```
+(v1.x) pkg> activate PackageName
 (PackageName) pkg> add LinearAlgebra
 ```
 
@@ -81,13 +81,13 @@ If your code is on GitHub, the simplest option is to use [GitHub Actions](https:
 #### Step 1
 Create a `test` directory under your root directory and add the file `runtest.jl`. Navigate into the `test` directory and add your test dependencies with REPL as such:
 ```{julia}
-<pkg> activate ./test
-<pkg> add Test
-<pkg> add LinearAlgebra # e.g. I'm using LinearAlgebra to test my package
+(@v1.x) pkg> activate ./test
+(@v1.x) pkg> add Test
+(@v1.x) pkg> add LinearAlgebra # e.g. Using LinearAlgebra to test my package
 ```
 This will create a separate `Project.toml` and `Manifest.toml` inside the `test` directory. Make sure to add every package that you are importing in `runtest.jl` file using REPL, otherwise CI will fail. 
 
-```{julia}
+```julia
 using
     Test,
     <PackageName>,
@@ -97,14 +97,14 @@ using
 @test somefunction2(2,3)
 
 @testset "Test norm" begin
-  @test norm(somefunction(5,8) - somefunction(8,5)) == 0 # I am using the norm function from the LinearAlgebra package.
+  @test norm(somefunction(5,8) - somefunction(8,5)) == 0 # Using the norm function from LinearAlgebra
 end
 ```
 After you are done writing tests, its good practice to run `runtest.jl` locally before pushing it to your repository as it will help you find bugs prior CI, saveing you time and credits. 
 
 #### Step 2
 In you root directory create a directory named `.github/workflows`. Within that directory, include the following `CI.yml`. 
-```
+```yaml
 # Generated using the wonderful PkgTemplates.jl and altered slightly 
 name: CI
 on:
@@ -122,8 +122,8 @@ on:
     - Project.toml
 jobs:
   test:
-    name: Julia \${{ matrix.version }} - \${{ matrix.os }} - \${{ matrix.arch }} - \${{ github.event_name }}
-    runs-on: \${{ matrix.os }}
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -140,18 +140,18 @@ jobs:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
         with:
-          version: \${{ matrix.version }}
-          arch: \${{ matrix.arch }}
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
       - uses: actions/cache@v1
         env:
           cache-name: cache-artifacts
         with:
           path: ~/.julia/artifacts
-          key: \${{ runner.os }}-test-\${{ env.cache-name }}-\${{ hashFiles('**/Project.toml') }}
+          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
           restore-keys: |
-            \${{ runner.os }}-test-\${{ env.cache-name }}-
-            \${{ runner.os }}-test-
-            \${{ runner.os }}-
+            ${{ runner.os }}-test-${{ env.cache-name }}-
+            ${{ runner.os }}-test-
+            ${{ runner.os }}-
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
       - uses: julia-actions/julia-processcoverage@v1
@@ -176,7 +176,7 @@ CodeCov badge: `https://codecov.io/gh/<your-organisation>/<your-project>/setting
 
 ### GitLab CI/CD
 If you are managing you code on GitLab, you can use GitLab CI/CD. After finishing **Step 1** from above, create a `.gitlab-ci.yml` file under you root directory and add the following:
-```{yaml}
+```yaml
 .check: # Specifying files to run CI/CD
   script: echo "Running CI/CD only if specific files are changed"
   rules:
