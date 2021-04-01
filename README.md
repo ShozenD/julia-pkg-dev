@@ -105,6 +105,7 @@ After you are done writing tests, its good practice to run `runtest.jl` locally 
 #### Step 2
 In you root directory create a directory named `.github/workflows`. Within that directory, include the following `CI.yml`. 
 ```yaml
+{% raw %}
 # Generated using the wonderful PkgTemplates.jl and altered slightly 
 name: CI
 on:
@@ -122,7 +123,7 @@ on:
     - Project.toml
 jobs:
   test:
-    name: Julia $\\{\{ matrix.version \}\} - $\{\{ matrix.os \}\} - $\{\{ matrix.arch \}\} - $\{\{ github.event_name \}\}
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -158,6 +159,7 @@ jobs:
       - uses: codecov/codecov-action@v1 
         with:
           file: lcov.info
+{% endraw %}
 ```
 `push` and `pull_request` events means that your CI/CD pipeline will only run on a push or pull request. Although its not covered here, you can specify branches and tags as well.
 
