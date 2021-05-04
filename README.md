@@ -1,12 +1,23 @@
 # A Basic Guide for Package Development in Julia
-**Author:** Shozen Dan, Stat&CS Undergrad @ Keio University (JPN) & UC Davis (USA)
+**Authors:**   
+* Shozen Dan, Stat&CS Undergrad @ Keio University (JPN) & UC Davis (USA)
+* Zeng Fung Liew, MS. Statistics @ UC Davis
 
-**Last Update**: 2019/03/21
+**Last Update**: 2021/05/03
+
+## Table of Contents
+1. [Initiating a Project](#initialization)
+2. [Continuous Integration and Development (CI/CD)](#ci)
+3. [Managing Julia Code on GitLab and GitHub](#remote)
+4. [Registering Your Package](#registration)
+5. [Documentations](#docs)
+6. [Version Tagging and Package Maintainance](#tags)
+7. [Using CompatHelper.yml](#compathelper)
 
 ## Introduction
 This tutorial assumes that the reader has some knowledge of using Julia to write programs. This tutorial aims to provide an one-stop tutorial for basic package development. 
 
-## 1. Initiating a Project
+## 1. Initiating a Project <a name="initialization"></a>
 ### 1.1 Starting from scratch
 If you're developing a package from scratch, the easiest way to initiate a project in Julia is enter the Pkg REPL mode by pressing ``]`` and using the following command.
 ```
@@ -41,7 +52,7 @@ If you already have a directory with Julia code that you have developed, you can
 (PackageName) pkg> add LinearAlgebra
 ```
 
-## 2. Continuous Integration and Develpment (CI/CD)
+## 2. Continuous Integration and Develpment (CI/CD) <a name="ci"></a>
 While it is not a requirement, many Julia packages implements CI. For small packaages, the work required to implement CI outweights its benefits. But, when packages become large and entangled, CI provide an automated way to build and test your package's functionalities. CI can also reassure potential users that your package is reliable and devoid of major bugs.
 
 The following table shows the pricing plans for 3 commonly used CI/CD services. For independent researchers or developers, GitHub workflows is a good choice because its free tier offers the most run time. But for large scale projects run by a team, it may be worth while to investigate the benefits paid tiers and other services such as GitLab and Travis CI has to offer.
@@ -113,13 +124,11 @@ on:
     paths: # Specifying which files to run CI/CD for
     - src/**
     - test/runtests.jl
-    - Manifest.toml
     - Project.toml
   pull_request:
     paths:
     - src/**
     - test/runtests.jl
-    - Manifest.toml
     - Project.toml
 jobs:
   test:
@@ -129,8 +138,8 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.0'
           - '1.5'
+          - '1.6'
           - 'nightly'
         os:
           - ubuntu-latest
@@ -165,7 +174,7 @@ jobs:
 
 Generally, you don't want to run CI/CD for every single change you make (e.g. changes to README.md file). Under `paths` you can specify which files you want to run CI/CD for. You can also use `paths-ignore` which will only run CI/CD if the altered code belongs to a file not specified under it. 
 
-You can specify which version of Julia you want to test and what machine you want to use under `matrix`. Here we test Julia 1.0, 1.5, and nightly(latest unstable ver.) on macOS and ubuntu machines. When you are testing your CI/CD pipeline, it may be prudent to comment some of these out to save time.
+You can specify which version of Julia you want to test and what machine you want to use under `matrix`. Here we test Julia 1.5, 1.6, and nightly(latest unstable ver.) on macOS and ubuntu machines. When you are testing your CI/CD pipeline, it may be prudent to comment some of these out to save time.
 
 #### Step 3
 The final step is to add code coverage (if you want). Code coverage is how many lines/arcs/blocks of your code is executed while performing the automated test that you have setup in your CI/CD process. While it is not a requirement, good code coverage statistics can give users insights about how well your package is tested (i.e. how reliable it is). There are numerous code coverage services you can choose from but the `CI.yml` file above assumes you are using [CodeCov](https://about.codecov.io/). Simply go to their website and follow the steps to link your package to CodeCov. 
@@ -175,6 +184,10 @@ Now, when you push your code to GitHub, it will automatically start testing you 
 GitHub workflow status badge: `https://docs.github.com/en/actions/managing-workflow-runs/adding-a-workflow-status-badge`
 
 CodeCov badge: `https://codecov.io/gh/<your-organisation>/<your-project>/settings/badge`
+
+Note: Your CodeCov badge link can be directly obtained from the settings of the package's Codecov repository. Simply enter CodeCov, navigate to the package repository and click on Settings. Your CodeCov badge can be found under the **Badge** tab on the left.
+
+Once this step is completed, one can move on directly to [Step 4: Registering your Package](#registration) and be done with the process of developing a software package in Julia. However, for the sake of long-term maintainability, it is strongly advised that one includes [documentations](#docs), [automated version tagging](#tags), and [automated compatability helper](#compathelper) in the package workflow.
 
 ### GitLab CI/CD
 If you are managing you code on GitLab, you can use GitLab CI/CD. After finishing **Step 1** from above, create a `.gitlab-ci.yml` file under you root directory and add the following:
@@ -226,7 +239,7 @@ Julia 1.5:
 ``` 
 As in the case of GitHub Actions, the code under `.check` will ensure that the CI/CD is not run for anything but a push or pull request to one of the specified files. 
 
-## 3. Managing Julia Code on GitLab and GitHub
+## 3. Managing Julia Code on GitLab and GitHub <a name="remote"></a>
 ### Transfering Code from GitLab to GitHub
 1. Create an [new repository](https://docs.github.com/en/github/getting-started-with-github/create-a-repo) on GitHub.
 
@@ -240,7 +253,7 @@ git remote add github https://yourLogin@github.com/yourLogin/yourRepoName.git
 git push --mirror github
 ```
 
-## 4. Registering your Package
+## 4. Registering your Package <a name="registration"></a>
 Currently, there are 2 ways of registering your package.
 1. Via the [Web Interface](https://juliahub.com). 
 2. Via the GitHub App. 
@@ -254,7 +267,126 @@ Comment `@JuliaRegistrator register` on the commit/branch you want to register (
 4. If the automatic tests pass, but a moderator makes suggestions (e.g., manually updating your (Julia)Project.toml to include a [compat] section with version requirements for dependancies), then incorporate suggestions as you see fit into a new commit, and redo step 2 for the new commit. You don't need to do anything to close out the old request.
 5. Finally, either rely on the TagBot GitHub Action to tag and make a github release or alternatively tag the release manually.
 
-### Extra. Creating Code Documentation for Julia Packages
-1. Install `Documentor.jl`
+## 5. Documentations <a name="docs"></a>
+In order for users to understand how to use your software package and have the work of future maintainers of your package cut out for them, it is important to add documentations for your package. The materials to cover in your documentation can range from package introduction and tutorials, to the documentation of each function in the package. Generally, all the documentations for your Julia package should be contained in the `docs/` directory. `Documenter.jl` and `DocumenterTools.jl` have built-in functions that help make this process run smoothly.
 
-2. Follow the [tutorial](https://juliadocs.github.io/Documenter.jl/stable/man/guide/) for `Documentor.jl`
+#### **Create `docs/` directory**
+If a `docs/` directory is yet to be establish, import `DocumenterTools.jl` in the REPL to get things started.
+```julia
+julia> cd("path/to/package_repo/")
+julia> using Pkg; Pkg.add("DocumenterTools")
+julia> using DocumenterTools
+julia> DocumenterTools.generate()
+```
+
+You should see that a `docs/` directory containing a `src/` folder, and `.gitignore`, `make.jl`, and `Project.toml` files. Here, the `Project.toml` file functions similarly to the one in the main `src/` directory in the package repository, the `src/` folder contains all the markdown files that needs to be generated into webpages, and the `make.jl` file is the key piece of this entire `docs/` directory as it contains the codes to generate the decumentation webpages corresponding to the `docs/src/` directory. Now, one has the liberty to design his/her own package's documentation, but here are some recommendations on what to tweak:  
+
+#### **Configuring `make.jl`**  
+Using the `DocumenterTools.generate()` function, the `make.jl` should contain 2 functions: `makedocs()` and `deploydocs()`. The `deploydocs()` function should be configured as follows:
+```julia
+deploydocs(
+  repo = "github.com/<repo-owner-name>/<pkg-name.jl>.git"
+)
+```
+As for the `makedocs()` function, most of the default parameter settings can be kept the way they are, but we recommend working with the `pages` parameter instead of the `modules` parameter for improved flexibility. In the end, the `makedocs()` function should look as follows:
+```julia
+makedocs(
+    sitename = "<pkg-name>.jl",
+    format = Documenter.HTML(),
+    authors = "<author-name>",
+    clean = true,
+    pages = Any[
+        "Page 1" => "page1.md",
+        "Page 2" => Any[
+            "Page 2.1" => "page21.md",
+            "Page 2.2" => "page22.md"
+        ]
+    ]
+)
+```
+To dive into the above code, items such as "Page 1" and "Page 2.1" will be included in the table of contents of your documentation webpage, while files such as `page1.md` and `page21.md` are the corresponding markdown files to generate these webpages.
+
+*Tip:* To better organize the markdown folders in `docs/src/`, one can create directories within `docs/src/` to store and organize the files within. For example, one can create `docs/src/pg2_files/` and store `page21.md` and `page22.md`. This means that `page21.md` and `page22.md` in the above code should be changed to `pg2_files/page21.md` and `pg2_files/page22.md` respectively.
+
+#### **Writing markdown files**
+Markdown files are created and written in the `docs/src/` folder as mentioned in the previous section. Generally, markdown files have to be written from scratch, especially those that are for tutorial purposes, but `Documenter.jl` provides macros that make writing API documentations much easier. The following example to automatically document all the documentations in your Julia package.
+<pre><code>
+# Package API
+
+```@index
+Modules = [module1, module2, module3]
+```
+
+```@autodocs
+Modules = [module1, module2, module3]
+```
+</code></pre>
+
+Additionally, one can use the `@example` macro to write examples/tutorials on the respective package. For example:
+<pre><code>
+# Package Tutorial
+
+```@example
+using MyPkg
+foo()
+```
+</code></pre>
+
+For more information on `Documenter.jl`'s macro usage, visit their documentation [here](https://juliadocs.github.io/Documenter.jl/stable/man/syntax/).
+
+#### **Set up Github workflow using `Documenter.yml`**
+Once the documentation is done, a Github workflow has to be set up to build the documentation pages. Navigate to `.github/workflows/` and create the file `Documenter.yml` and add the following lines into that file:
+```yaml
+name: Documenter
+on:
+  push:
+    branches:
+      - master
+    tags: '*'
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@latest
+        with:
+          version: '1.6'
+      - name: Install dependencies
+        run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+      - name: Build and deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }} # For authentication with SSH deploy key
+        run: julia --project=docs/ docs/make.jl
+```
+
+#### **Github Actions Authorization**
+Next, we need to set up the `GITHUB_TOKEN` and `DOCUMENTER_KEY` values and make some configurations in the Github repository settings to authorize Github Actions to generate the documentation webpages. The full documentation on this can be found in `Documenter.jl`'s documentation [here](https://juliadocs.github.io/Documenter.jl/stable/man/hosting/index.html), and the following steps are the summary of what needs to be done.  
+Open up the REPL and type the following:
+```julia
+julia> cd("path/to/pkg-name/")
+julia> using DocumenterTools
+julia> DocumenterTools.genkeys()
+```  
+The following output will be observed, follow the instructions written in the output. 
+```
+[ Info: add the public key below to https://github.com/$USER/$REPO/settings/keys with read/write access:
+
+[SSH PUBLIC KEY HERE]
+
+[ Info: add a secure environment variable named 'DOCUMENTER_KEY' to https://travis-ci.com/$USER/$REPO/settings (if you deploy using Travis CI) or https://github.com/$USER/$REPO/settings/secrets (if you deploy using GitHub Actions) with value:
+
+[LONG BASE64 ENCODED PRIVATE KEY]
+```
+The top instruction can be completed by navigating to the **Settings** tab in the Github repository, then clicking on **Deploy keys** on the left-menu. Click on **Add deploy key** and copy-paste the generated SSH public key.
+
+The bottom instruction can be completed by navigating to **Secrets** on the left-menu in the **Settings** tab. Click on **New repository secret**, set the name as DOCUMENTER_KEY and copy-paste the private key into the value field.
+
+#### **Set up Github Pages**
+Last but not least, navigate to **Pages** on the left-menu in the repository **Settings** tab. Set the source branch to be "gh-pages". This means that all the outputs from `docs/make.jl` will be stored in this branch, and what users see in the documentation webpages is powered from this branch.
+
+The set-up of the package's documentation webpages is now complete. As with the configuration in `Documenter.yml`, the documentation workflow will only be triggered when there is a new commit pushed into the master branch.
+## 6. Version Tagging and Package Maintainance <a name="tags"></a>
+
+## 7. Using CompatHelper.yml <a name="compathelper"></a>
