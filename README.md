@@ -27,7 +27,7 @@ This will create a directory called ``PackageName`` which contains the ``src`` s
 
 Before addning new dependencies to your package, first activate the environment of package by entering the Pkg REPL mode again and entering the following:
 ```julia
-(v1.x) pkg> activate PackageName
+(@v1.x) pkg> activate PackageName
 ```
 
 To add a dependency, use ``add``:
