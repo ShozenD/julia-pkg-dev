@@ -187,7 +187,7 @@ GitHub workflow status badge: `https://docs.github.com/en/actions/managing-workf
 
 CodeCov badge: `https://codecov.io/gh/<your-organisation>/<your-project>/settings/badge`
 
-Note: Your CodeCov badge link can be directly obtained from the settings of the package's Codecov repository. Simply enter CodeCov, navigate to the package repository and click on Settings. Your CodeCov badge can be found under the **Badge** tab on the left.
+**Note:** Your CodeCov badge link can be directly obtained from the settings of the package's Codecov repository. Simply enter CodeCov, navigate to the package repository and click on Settings. Your CodeCov badge can be found under the **Badge** tab on the left.
 
 Once this step is completed, one can move on directly to [Step 4: Registering your Package](#registration) and be done with the process of developing a software package in Julia. However, for the sake of long-term maintainability, it is strongly advised that one includes [documentations](#docs), [automated version tagging](#tags), and [automated compatability helper](#compathelper) in the package workflow.
 
@@ -267,13 +267,13 @@ Documentation for both methods can be found @ the [Julia Registrator](https://gi
 Comment `@JuliaRegistrator register` on the commit/branch you want to register (e.g. like [here](https://github.com/JuliaRegistries/Registrator.jl/issues/61#issuecomment-483486641) or [here](https://github.com/chakravala/Grassmann.jl/commit/3c3a92610ebc8885619f561fe988b0d985852fce#commitcomment-33233149)).
 3. If something is incorrect, adjust, and redo step 
 4. If the automatic tests pass, but a moderator makes suggestions (e.g., manually updating your (Julia)Project.toml to include a [compat] section with version requirements for dependancies), then incorporate suggestions as you see fit into a new commit, and redo step 2 for the new commit. You don't need to do anything to close out the old request.
-5. Finally, either rely on the TagBot GitHub Action to tag and make a github release or alternatively tag the release manually.
+5. Finally, either rely on the TagBot GitHub Action to tag and make a github release or alternatively tag the release manually. For more information, go to [Step 6](#tags).
 
 ## 5. Documentations <a name="docs"></a>
 In order for users to understand how to use your software package and have the work of future maintainers of your package cut out for them, it is important to add documentations for your package. The materials to cover in your documentation can range from package introduction and tutorials, to the documentation of each function in the package. Generally, all the documentations for your Julia package should be contained in the `docs/` directory. `Documenter.jl` and `DocumenterTools.jl` have built-in functions that help make this process run smoothly.
 
 #### **Create `docs/` directory**
-If a `docs/` directory is yet to be establish, import `DocumenterTools.jl` in the REPL to get things started.
+If a `docs/` directory is yet to be established, import `DocumenterTools.jl` in the REPL to get things started.
 ```julia
 julia> cd("path/to/package_repo/")
 julia> using Pkg; Pkg.add("DocumenterTools")
@@ -284,7 +284,7 @@ julia> DocumenterTools.generate()
 You should see that a `docs/` directory containing a `src/` folder, and `.gitignore`, `make.jl`, and `Project.toml` files. Here, the `Project.toml` file functions similarly to the one in the main `src/` directory in the package repository, the `src/` folder contains all the markdown files that needs to be generated into webpages, and the `make.jl` file is the key piece of this entire `docs/` directory as it contains the codes to generate the decumentation webpages corresponding to the `docs/src/` directory. Now, one has the liberty to design his/her own package's documentation, but here are some recommendations on what to tweak:  
 
 #### **Configuring `make.jl`**  
-Using the `DocumenterTools.generate()` function, the `make.jl` should contain 2 functions: `makedocs()` and `deploydocs()`. The `deploydocs()` function should be configured as follows:
+Using the `DocumenterTools.generate()` function, the generated `make.jl` file should contain 2 functions: `makedocs()` and `deploydocs()`. The `deploydocs()` function should be configured as follows:
 ```julia
 deploydocs(
   repo = "github.com/<repo-owner-name>/<pkg-name.jl>.git"
@@ -306,7 +306,7 @@ makedocs(
     ]
 )
 ```
-To dive into the above code, items such as "Page 1" and "Page 2.1" will be included in the table of contents of your documentation webpage, while files such as `page1.md` and `page21.md` are the corresponding markdown files to generate these webpages.
+To dive into the above code, phrases such as "Page 1" and "Page 2.1" will be included in the table of contents of your documentation webpage, while files such as `page1.md` and `page21.md` are the corresponding markdown files to generate these webpages.
 
 *Tip:* To better organize the markdown folders in `docs/src/`, one can create directories within `docs/src/` to store and organize the files within. For example, one can create `docs/src/pg2_files/` and store `page21.md` and `page22.md`. This means that `page21.md` and `page22.md` in the above code should be changed to `pg2_files/page21.md` and `pg2_files/page22.md` respectively.
 
